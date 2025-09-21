@@ -63,7 +63,41 @@ const Index = () => {
         location: "Lonavala bypass"
       }
     ],
-    waypoints: ["Kalyan", "Lonavala", "Khandala"]
+    waypoints: [
+      {
+        name: "Kalyan",
+        weather: {
+          condition: "sunny" as const,
+          temperature: 27
+        },
+        roadCondition: {
+          status: "good" as const,
+          alerts: []
+        }
+      },
+      {
+        name: "Lonavala", 
+        weather: {
+          condition: "cloudy" as const,
+          temperature: 23
+        },
+        roadCondition: {
+          status: "fair" as const,
+          alerts: ["Minor road repairs ongoing"]
+        }
+      },
+      {
+        name: "Khandala",
+        weather: {
+          condition: "rainy" as const,
+          temperature: 21
+        },
+        roadCondition: {
+          status: "poor" as const,
+          alerts: ["Waterlogging reported", "Reduced visibility due to fog"]
+        }
+      }
+    ]
   };
 
   const handleDestinationSearch = (destination: string) => {
