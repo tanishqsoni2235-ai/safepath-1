@@ -2,6 +2,7 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Navigation, AlertTriangle, Clock, MapPin, Car, Sun, Cloud, CloudRain, Thermometer, Shield } from "lucide-react";
+import RouteMap from "./RouteMap";
 
 interface RouteAlert {
   type: "pothole" | "construction" | "weather" | "traffic";
@@ -140,6 +141,12 @@ const RouteDisplay = ({ routeInfo, onStartNavigation }: RouteDisplayProps) => {
           </div>
         </div>
       </Card>
+
+      <RouteMap 
+        origin={routeInfo.origin}
+        destination={routeInfo.destination}
+        waypoints={routeInfo.waypoints}
+      />
 
       {routeInfo.alerts && routeInfo.alerts.length > 0 && (
         <Card className="travel-card">
