@@ -1,7 +1,7 @@
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Navigation, AlertTriangle, Clock, MapPin, Car } from "lucide-react";
+import { Navigation, AlertTriangle, Clock, MapPin, Car, Sun, Cloud, CloudRain, Thermometer, Shield } from "lucide-react";
 
 interface RouteAlert {
   type: "pothole" | "construction" | "weather" | "traffic";
@@ -10,13 +10,25 @@ interface RouteAlert {
   location: string;
 }
 
+interface WaypointInfo {
+  name: string;
+  weather: {
+    condition: "sunny" | "cloudy" | "rainy";
+    temperature: number;
+  };
+  roadCondition: {
+    status: "good" | "fair" | "poor";
+    alerts: string[];
+  };
+}
+
 interface RouteInfo {
   origin: string;
   destination: string;
   distance: string;
   duration: string;
   alerts: RouteAlert[];
-  waypoints: string[];
+  waypoints: WaypointInfo[];
 }
 
 interface RouteDisplayProps {
@@ -60,6 +72,32 @@ const RouteDisplay = ({ routeInfo, onStartNavigation }: RouteDisplayProps) => {
         return Car;
       default:
         return AlertTriangle;
+    }
+  };
+
+  const getWeatherIcon = (condition: string) => {
+    switch (condition) {
+      case "sunny":
+        return <Sun className="h-4 w-4 text-warning" />;
+      case "cloudy":
+        return <Cloud className="h-4 w-4 text-muted-foreground" />;
+      case "rainy":
+        return <CloudRain className="h-4 w-4 text-accent" />;
+      default:
+        return <Sun className="h-4 w-4 text-warning" />;
+    }
+  };
+
+  const getRoadConditionColor = (status: string) => {
+    switch (status) {
+      case "good":
+        return "bg-green-500/20 text-green-700 dark:text-green-400";
+      case "fair":
+        return "bg-yellow-500/20 text-yellow-700 dark:text-yellow-400";
+      case "poor":
+        return "bg-red-500/20 text-red-700 dark:text-red-400";
+      default:
+        return "bg-muted text-muted-foreground";
     }
   };
 
@@ -151,11 +189,57 @@ const RouteDisplay = ({ routeInfo, onStartNavigation }: RouteDisplayProps) => {
               Waypoints
             </h4>
             
-            <div className="space-y-2">
+            <div className="space-y-3">
               {routeInfo.waypoints.map((waypoint, index) => (
-                <div key={index} className="flex items-center space-x-2">
-                  <div className="w-2 h-2 rounded-full bg-accent"></div>
-                  <span className="text-sm text-foreground">{waypoint}</span>
+                <div key={index} className="p-3 rounded-lg bg-muted/30 border border-border/50">
+                  <div className="flex items-start justify-between">
+                    <div className="flex items-center space-x-2 mb-2">
+                      <div className="w-2 h-2 rounded-full bg-accent"></div>
+                      <span className="font-medium text-foreground">{waypoint.name}</span>
+                    </div>
+                  </div>
+                  
+                  <div className="ml-4 space-y-2">
+                    {/* Weather Info */}
+                    <div className="flex items-center space-x-3">
+                      {getWeatherIcon(waypoint.weather.condition)}
+                      <div className="flex items-center space-x-2">
+                        <Badge className="weather-badge">
+                          <Thermometer className="h-3 w-3 mr-1" />
+                          {waypoint.weather.temperature}°C
+                        </Badge>
+                        <span className="text-xs text-muted-foreground capitalize">
+                          {waypoint.weather.condition}
+                        </span>
+                      </div>
+                    </div>
+                    
+                    {/* Road Condition */}
+                    <div className="flex items-center space-x-3">
+                      <Shield className="h-4 w-4 text-muted-foreground" />
+                      <div className="flex items-center space-x-2">
+                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${getRoadConditionColor(waypoint.roadCondition.status)}`}>
+                          {waypoint.roadCondition.status} road
+                        </span>
+                        {waypoint.roadCondition.alerts.length > 0 && (
+                          <Badge variant="secondary" className="text-xs">
+                            {waypoint.roadCondition.alerts.length} alert{waypoint.roadCondition.alerts.length > 1 ? 's' : ''}
+                          </Badge>
+                        )}
+                      </div>
+                    </div>
+                    
+                    {/* Road Alerts */}
+                    {waypoint.roadCondition.alerts.length > 0 && (
+                      <div className="ml-5 space-y-1">
+                        {waypoint.roadCondition.alerts.map((alert, alertIndex) => (
+                          <p key={alertIndex} className="text-xs text-muted-foreground">
+                            • {alert}
+                          </p>
+                        ))}
+                      </div>
+                    )}
+                  </div>
                 </div>
               ))}
             </div>
