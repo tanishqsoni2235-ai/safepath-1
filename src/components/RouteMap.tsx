@@ -1,10 +1,6 @@
-import React, { useEffect, useRef, useState } from 'react';
-import mapboxgl from 'mapbox-gl';
-import 'mapbox-gl/dist/mapbox-gl.css';
+import React from 'react';
 import { Card } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
-import { MapPin, Save } from 'lucide-react';
+import { MapPin, Navigation, AlertTriangle, Cloud, Sun, CloudRain } from 'lucide-react';
 
 interface RouteMapProps {
   origin: string;
@@ -23,200 +19,152 @@ interface RouteMapProps {
 }
 
 const RouteMap = ({ origin, destination, waypoints }: RouteMapProps) => {
-  const mapContainer = useRef<HTMLDivElement>(null);
-  const map = useRef<mapboxgl.Map | null>(null);
-  const [mapboxToken, setMapboxToken] = useState<string>('');
-  const [isTokenSaved, setIsTokenSaved] = useState(false);
-
-  // Check for saved token in localStorage
-  useEffect(() => {
-    const savedToken = localStorage.getItem('mapbox_token');
-    if (savedToken) {
-      setMapboxToken(savedToken);
-      setIsTokenSaved(true);
-    }
-  }, []);
-
-  const saveToken = () => {
-    if (mapboxToken) {
-      localStorage.setItem('mapbox_token', mapboxToken);
-      setIsTokenSaved(true);
+  const getWeatherIcon = (condition: string) => {
+    switch (condition.toLowerCase()) {
+      case 'sunny':
+        return <Sun className="h-4 w-4 text-yellow-500" />;
+      case 'cloudy':
+        return <Cloud className="h-4 w-4 text-gray-500" />;
+      case 'rainy':
+        return <CloudRain className="h-4 w-4 text-blue-500" />;
+      default:
+        return <Cloud className="h-4 w-4 text-gray-500" />;
     }
   };
 
-  useEffect(() => {
-    if (!mapContainer.current || !mapboxToken || !isTokenSaved) return;
-
-    // Initialize map
-    mapboxgl.accessToken = mapboxToken;
-    
-    map.current = new mapboxgl.Map({
-      container: mapContainer.current,
-      style: 'mapbox://styles/mapbox/streets-v12',
-      center: [72.8777, 19.0760], // Mumbai coordinates as default
-      zoom: 8,
-    });
-
-    // Add navigation controls
-    map.current.addControl(
-      new mapboxgl.NavigationControl({
-        visualizePitch: true,
-      }),
-      'top-right'
-    );
-
-    // Sample coordinates for demonstration (in real app, these would come from geocoding)
-    const routeCoordinates: [number, number][] = [
-      [72.8777, 19.0760], // Mumbai
-      [73.2619, 18.5204], // Pune
-    ];
-
-    // Add markers for origin and destination
-    new mapboxgl.Marker({ color: '#FF6B35' })
-      .setLngLat(routeCoordinates[0])
-      .setPopup(new mapboxgl.Popup().setHTML(`<h3>${origin}</h3><p>Origin</p>`))
-      .addTo(map.current);
-
-    new mapboxgl.Marker({ color: '#4ECDC4' })
-      .setLngLat(routeCoordinates[1])
-      .setPopup(new mapboxgl.Popup().setHTML(`<h3>${destination}</h3><p>Destination</p>`))
-      .addTo(map.current);
-
-    // Add waypoint markers
-    waypoints.forEach((waypoint, index) => {
-      // Sample coordinates for waypoints (in real app, these would come from geocoding)
-      const waypointCoords: [number, number] = [
-        72.8777 + (index + 1) * 0.1, 
-        19.0760 - (index + 1) * 0.1
-      ];
-      
-      new mapboxgl.Marker({ color: '#95A5A6' })
-        .setLngLat(waypointCoords)
-        .setPopup(new mapboxgl.Popup().setHTML(`
-          <h3>${waypoint.name}</h3>
-          <p>${waypoint.weather.temperature}°C, ${waypoint.weather.condition}</p>
-          <p>Road: ${waypoint.roadCondition.status}</p>
-        `))
-        .addTo(map.current);
-    });
-
-    // Add route line
-    map.current.on('load', () => {
-      if (!map.current) return;
-      
-      map.current.addSource('route', {
-        'type': 'geojson',
-        'data': {
-          'type': 'Feature',
-          'properties': {},
-          'geometry': {
-            'type': 'LineString',
-            'coordinates': routeCoordinates
-          }
-        }
-      });
-
-      map.current.addLayer({
-        'id': 'route',
-        'type': 'line',
-        'source': 'route',
-        'layout': {
-          'line-join': 'round',
-          'line-cap': 'round'
-        },
-        'paint': {
-          'line-color': '#FF6B35',
-          'line-width': 4,
-          'line-opacity': 0.8
-        }
-      });
-
-      // Fit the map to show the entire route
-      const bounds = new mapboxgl.LngLatBounds();
-      routeCoordinates.forEach(coord => bounds.extend(coord as [number, number]));
-      map.current.fitBounds(bounds, { padding: 50 });
-    });
-
-    // Cleanup
-    return () => {
-      map.current?.remove();
-    };
-  }, [mapboxToken, isTokenSaved, origin, destination, waypoints]);
-
-  if (!isTokenSaved) {
-    return (
-      <Card className="travel-card">
-        <div className="space-y-4">
-          <div className="text-center py-4">
-            <MapPin className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-            <h3 className="text-lg font-semibold text-foreground mb-2">
-              Enable Route Map
-            </h3>
-            <p className="text-sm text-muted-foreground mb-4">
-              Enter your Mapbox public token to view the interactive route map
-            </p>
-            <p className="text-xs text-muted-foreground mb-4">
-              Get your token from{' '}
-              <a 
-                href="https://mapbox.com/" 
-                target="_blank" 
-                rel="noopener noreferrer"
-                className="text-primary hover:underline"
-              >
-                mapbox.com
-              </a>
-            </p>
-          </div>
-          
-          <div className="space-y-3">
-            <Input
-              type="text"
-              placeholder="pk.eyJ1IjoieW91ci11c2VybmFtZSIsImEiOiJjbGd0..."
-              value={mapboxToken}
-              onChange={(e) => setMapboxToken(e.target.value)}
-              className="font-mono text-sm"
-            />
-            <Button 
-              onClick={saveToken} 
-              disabled={!mapboxToken}
-              className="w-full"
-            >
-              <Save className="h-4 w-4 mr-2" />
-              Save Token & Show Map
-            </Button>
-          </div>
-          
-          <div className="text-xs text-muted-foreground text-center">
-            <p>Note: Your token will be stored locally in your browser</p>
-          </div>
-        </div>
-      </Card>
-    );
-  }
+  const getRoadConditionColor = (status: string) => {
+    switch (status.toLowerCase()) {
+      case 'good':
+        return 'bg-green-500';
+      case 'fair':
+        return 'bg-yellow-500';
+      case 'poor':
+        return 'bg-red-500';
+      default:
+        return 'bg-gray-500';
+    }
+  };
 
   return (
     <Card className="travel-card overflow-hidden">
       <div className="space-y-4">
-        <h3 className="text-lg font-semibold text-foreground">
-          Route Map
-        </h3>
-        <div 
-          ref={mapContainer} 
-          className="w-full h-64 rounded-lg border border-border/50"
-        />
-        <div className="flex justify-between items-center text-xs text-muted-foreground">
-          <span>Interactive map with route and waypoints</span>
-          <Button 
-            variant="ghost" 
-            size="sm"
-            onClick={() => {
-              localStorage.removeItem('mapbox_token');
-              setIsTokenSaved(false);
-              setMapboxToken('');
-            }}
-          >
-            Change Token
-          </Button>
+        <div className="flex items-center justify-between">
+          <h3 className="text-lg font-semibold text-foreground">
+            Route Overview
+          </h3>
+          <Navigation className="h-5 w-5 text-primary" />
+        </div>
+        
+        <div className="relative">
+          {/* Visual Route Map */}
+          <div className="bg-muted/30 rounded-lg p-6 min-h-[280px] relative overflow-hidden">
+            {/* Background grid pattern */}
+            <div className="absolute inset-0 opacity-10">
+              <svg width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
+                <defs>
+                  <pattern id="grid" width="20" height="20" patternUnits="userSpaceOnUse">
+                    <path d="M 20 0 L 0 0 0 20" fill="none" stroke="currentColor" strokeWidth="1"/>
+                  </pattern>
+                </defs>
+                <rect width="100%" height="100%" fill="url(#grid)" />
+              </svg>
+            </div>
+
+            {/* Route Line */}
+            <svg className="absolute inset-0 w-full h-full" viewBox="0 0 400 280">
+              <defs>
+                <linearGradient id="routeGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" stopColor="hsl(var(--primary))" stopOpacity="0.8" />
+                  <stop offset="100%" stopColor="hsl(var(--primary))" stopOpacity="0.4" />
+                </linearGradient>
+              </defs>
+              <path
+                d="M 60 60 Q 120 100 180 120 Q 240 140 340 180"
+                stroke="url(#routeGradient)"
+                strokeWidth="4"
+                fill="none"
+                strokeLinecap="round"
+                strokeDasharray="8,4"
+                className="animate-pulse"
+              />
+            </svg>
+
+            {/* Origin Point */}
+            <div className="absolute top-8 left-8 flex flex-col items-center">
+              <div className="bg-primary text-primary-foreground rounded-full p-2 shadow-lg">
+                <MapPin className="h-4 w-4" />
+              </div>
+              <div className="mt-2 bg-background/90 backdrop-blur-sm rounded-lg px-3 py-2 shadow-md border">
+                <p className="text-sm font-medium text-foreground">{origin}</p>
+                <p className="text-xs text-muted-foreground">Start</p>
+              </div>
+            </div>
+
+            {/* Waypoints */}
+            {waypoints.map((waypoint, index) => (
+              <div
+                key={index}
+                className={`absolute flex flex-col items-center ${
+                  index === 0 ? 'top-16 left-32' : 
+                  index === 1 ? 'top-24 left-48' : 
+                  'top-32 left-56'
+                }`}
+              >
+                <div className="bg-secondary text-secondary-foreground rounded-full p-2 shadow-lg relative">
+                  <Navigation className="h-3 w-3" />
+                  {waypoint.roadCondition.alerts.length > 0 && (
+                    <div className="absolute -top-1 -right-1 bg-destructive rounded-full p-1">
+                      <AlertTriangle className="h-2 w-2 text-destructive-foreground" />
+                    </div>
+                  )}
+                </div>
+                <div className="mt-2 bg-background/90 backdrop-blur-sm rounded-lg px-3 py-2 shadow-md border max-w-32">
+                  <p className="text-xs font-medium text-foreground truncate">{waypoint.name}</p>
+                  <div className="flex items-center gap-1 mt-1">
+                    {getWeatherIcon(waypoint.weather.condition)}
+                    <span className="text-xs text-muted-foreground">
+                      {waypoint.weather.temperature}°C
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-1 mt-1">
+                    <div className={`w-2 h-2 rounded-full ${getRoadConditionColor(waypoint.roadCondition.status)}`} />
+                    <span className="text-xs text-muted-foreground capitalize">
+                      {waypoint.roadCondition.status}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            ))}
+
+            {/* Destination Point */}
+            <div className="absolute top-32 right-8 flex flex-col items-center">
+              <div className="bg-accent text-accent-foreground rounded-full p-2 shadow-lg">
+                <MapPin className="h-4 w-4" />
+              </div>
+              <div className="mt-2 bg-background/90 backdrop-blur-sm rounded-lg px-3 py-2 shadow-md border">
+                <p className="text-sm font-medium text-foreground">{destination}</p>
+                <p className="text-xs text-muted-foreground">Destination</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Route Summary */}
+        <div className="grid grid-cols-3 gap-3 pt-2">
+          <div className="text-center">
+            <p className="text-xs text-muted-foreground">Distance</p>
+            <p className="text-sm font-medium">148 km</p>
+          </div>
+          <div className="text-center">
+            <p className="text-xs text-muted-foreground">Duration</p>
+            <p className="text-sm font-medium">3h 20m</p>
+          </div>
+          <div className="text-center">
+            <p className="text-xs text-muted-foreground">Alerts</p>
+            <div className="flex justify-center">
+              <AlertTriangle className="h-4 w-4 text-amber-500" />
+            </div>
+          </div>
         </div>
       </div>
     </Card>
