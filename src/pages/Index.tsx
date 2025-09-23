@@ -126,7 +126,7 @@ const Index = () => {
 
   const texts = {
     en: {
-      title: "YatraPath",
+      title: "SafePath",
       subtitle: "Smart Travel Companion for India",
       description: "Get real-time routes, weather updates, road alerts, and report civic issues - all in one app",
       tabRoute: "Route",
@@ -135,7 +135,7 @@ const Index = () => {
       heroAlt: "Indian travel destinations"
     },
     hi: {
-      title: "यात्रापथ",
+      title: "सुरक्षित पथ",
       subtitle: "भारत के लिए स्मार्ट यात्रा साथी",
       description: "वास्तविक समय के मार्ग, मौसम अपडेट, सड़क अलर्ट प्राप्त करें और नागरिक समस्याओं की रिपोर्ट करें",
       tabRoute: "मार्ग",
