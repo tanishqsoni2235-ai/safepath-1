@@ -1,6 +1,5 @@
 import { useState } from "react";
 import { Card } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Navigation, MapPin, AlertTriangle, Cloud, MessageSquare } from "lucide-react";
@@ -17,96 +16,133 @@ import heroImage from "@/assets/hero-travel-india.jpg";
 const Index = () => {
   const [currentRoute, setCurrentRoute] = useState(null);
   const [currentLanguage, setCurrentLanguage] = useState<"en" | "hi">("en");
+  const [weatherData, setWeatherData] = useState([]);
+  const [isWeatherLoading, setIsWeatherLoading] = useState(false);
   const { toast } = useToast();
 
-  // Sample data for demonstration
-  const sampleWeatherData = [
-    {
-      location: "Mumbai",
-      temperature: 28,
-      condition: "sunny" as const,
-      humidity: 65,
-      windSpeed: 12
-    },
-    {
-      location: "Pune", 
-      temperature: 24,
-      condition: "cloudy" as const,
-      humidity: 70,
-      windSpeed: 8
-    },
-    {
-      location: "Nashik",
-      temperature: 22,
-      condition: "rainy" as const,
-      humidity: 85,
-      windSpeed: 15
-    }
-  ];
+  const fetchWeather = async (location: string) => {
+    try {
+      const apiKey = import.meta.env.VITE_OPENWEATHER_API_KEY;
+      if (!apiKey) {
+        console.error("OpenWeather API key is missing from environment variables.");
+        return null;
+      }
 
-  const sampleRouteInfo = {
-    origin: "Mumbai, Maharashtra",
-    destination: "Pune, Maharashtra", 
-    distance: "148 km",
-    duration: "3h 20m",
-    alerts: [
-      {
-        type: "pothole" as const,
-        message: "Multiple potholes reported",
-        severity: "medium" as const,
-        location: "Mumbai-Pune Expressway km 45"
-      },
-      {
-        type: "construction" as const,
-        message: "Road construction ongoing",
-        severity: "high" as const,
-        location: "Lonavala bypass"
+      const response = await fetch(
+        `https://api.openweathermap.org/data/2.5/weather?q=${location}&appid=${apiKey}&units=metric`
+      );
+
+      const data = await response.json();
+
+      if (!response.ok || !data || !data.main) {
+        console.error("API error:", data);
+        toast({
+          title: "Weather Data Not Found",
+          description: `API returned an error for ${location}: ${data.message || 'Unknown error'}`,
+          variant: "destructive"
+        });
+        return null;
       }
-    ],
-    waypoints: [
-      {
-        name: "Kalyan",
-        weather: {
-          condition: "sunny" as const,
-          temperature: 27
-        },
-        roadCondition: {
-          status: "good" as const,
-          alerts: []
-        }
-      },
-      {
-        name: "Lonavala", 
-        weather: {
-          condition: "cloudy" as const,
-          temperature: 23
-        },
-        roadCondition: {
-          status: "fair" as const,
-          alerts: ["Minor road repairs ongoing"]
-        }
-      },
-      {
-        name: "Khandala",
-        weather: {
-          condition: "rainy" as const,
-          temperature: 21
-        },
-        roadCondition: {
-          status: "poor" as const,
-          alerts: ["Waterlogging reported", "Reduced visibility due to fog"]
-        }
-      }
-    ]
+      
+      return {
+        location: data.name,
+        temperature: Math.round(data.main.temp),
+        condition: data.weather[0].main.toLowerCase(),
+        humidity: data.main.humidity,
+        windSpeed: Math.round(data.wind.speed * 3.6),
+      };
+
+    } catch (error) {
+      console.error("Failed to fetch weather data:", error);
+      toast({
+        title: "Weather Fetch Error",
+        description: `Failed to connect to weather service for ${location}.`,
+        variant: "destructive"
+      });
+      return null;
+    }
   };
 
-  const handleDestinationSearch = (destination: string) => {
-    // Simulate route planning
-    setCurrentRoute(sampleRouteInfo);
+  const handleDestinationSearch = async (destination: string) => {
+    // Simulate API call to get route info
+    const simulatedRouteInfo = {
+      origin: "Bhopal, India",
+      destination: "Indore, India",
+      distance: "194 km",
+      duration: "3h 40m",
+      alerts: [
+        {
+          type: "pothole" as const,
+          message: "Multiple potholes reported",
+          severity: "medium" as const,
+          location: `${destination} City Bypass`,
+        },
+        {
+          type: "construction" as const,
+          message: "Road construction ongoing",
+          severity: "high" as const,
+          location: "National Highway 48",
+        },
+      ],
+      waypoints: [
+        {
+          name: "Sehore",
+          weather: {
+            condition: "sunny" as const,
+            temperature: 27
+          },
+          roadCondition: {
+            status: "good" as const,
+            alerts: []
+          }
+        },
+        {
+          name: "Ashta",
+          weather: {
+            condition: "cloudy" as const,
+            temperature: 23
+          },
+          roadCondition: {
+            status: "fair" as const,
+            alerts: ["Minor road repairs ongoing"]
+          }
+        },
+        {
+          name: "Dewas",
+          weather: {
+            condition: "rainy" as const,
+            temperature: 21
+          },
+          roadCondition: {
+            status: "poor" as const,
+            alerts: ["Waterlogging reported", "Reduced visibility due to fog"]
+          }
+        }
+      ]
+    };
+    setCurrentRoute(simulatedRouteInfo);
     toast({
       title: "Route Planned",
       description: `Route to ${destination} has been calculated`,
     });
+
+    // Fetch weather for both locations simultaneously
+    setIsWeatherLoading(true);
+    const originCity = "Indore, India";
+    const [originWeather, destinationWeather] = await Promise.all([
+      fetchWeather(originCity),
+      fetchWeather(destination),
+    ]);
+
+    const allWeatherData = [];
+    if (originWeather) {
+      allWeatherData.push(originWeather);
+    }
+    if (destinationWeather) {
+      allWeatherData.push(destinationWeather);
+    }
+    setWeatherData(allWeatherData);
+    setIsWeatherLoading(false);
   };
 
   const handleComplaintSubmit = (complaint: any) => {
@@ -118,6 +154,7 @@ const Index = () => {
   };
 
   const handleStartNavigation = () => {
+    // Logic for starting navigation, which could use map APIs.
     toast({
       title: "Navigation Started",
       description: "GPS navigation has been initiated",
@@ -130,7 +167,7 @@ const Index = () => {
       subtitle: "Smart Travel Companion for India",
       description: "Get real-time routes, weather updates, road alerts, and report civic issues - all in one app",
       tabRoute: "Route",
-      tabWeather: "Weather", 
+      tabWeather: "Weather",
       tabComplaint: "Report Issue",
       heroAlt: "Indian travel destinations"
     },
@@ -223,7 +260,7 @@ const Index = () => {
 
             <TabsContent value="weather" className="space-y-6">
               <div className="max-w-2xl mx-auto">
-                <WeatherDisplay weatherData={sampleWeatherData} />
+                <WeatherDisplay weatherData={weatherData} isLoading={isWeatherLoading} />
               </div>
             </TabsContent>
 

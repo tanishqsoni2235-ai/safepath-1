@@ -5,28 +5,68 @@ import { Cloud, Sun, CloudRain, MapPin, Thermometer } from "lucide-react";
 interface WeatherData {
   location: string;
   temperature: number;
-  condition: "sunny" | "cloudy" | "rainy";
+  condition: number;
   humidity: number;
   windSpeed: number;
 }
 
 interface WeatherDisplayProps {
   weatherData: WeatherData[];
+  isLoading: boolean;
 }
 
-const WeatherDisplay = ({ weatherData }: WeatherDisplayProps) => {
-  const getWeatherIcon = (condition: string) => {
-    switch (condition) {
-      case "sunny":
+const WeatherDisplay = ({ weatherData, isLoading }: WeatherDisplayProps) => {
+  const getWeatherIcon = (weatherCode: number) => {
+    // Mapping Tomorrow.io weather codes to Lucide icons
+    // Weather codes reference: https://docs.tomorrow.io/reference/data-layers-weather-codes
+    switch (true) {
+      case weatherCode >= 1000 && weatherCode <= 1100: // Clear, Mostly Clear
         return <Sun className="h-6 w-6 text-warning" />;
-      case "cloudy":
+      case weatherCode >= 1101 && weatherCode <= 1102: // Partly Cloudy, Mostly Cloudy
         return <Cloud className="h-6 w-6 text-muted-foreground" />;
-      case "rainy":
+      case weatherCode >= 4000 && weatherCode <= 4215: // Drizzle, Rain, Heavy Rain
+      case weatherCode >= 5000 && weatherCode <= 5101: // Snow, Heavy Snow
         return <CloudRain className="h-6 w-6 text-accent" />;
       default:
         return <Sun className="h-6 w-6 text-warning" />;
     }
   };
+
+  const getWeatherConditionText = (weatherCode: number) => {
+    switch (true) {
+      case weatherCode === 1000:
+        return "Clear";
+      case weatherCode === 1100:
+        return "Mostly Clear";
+      case weatherCode === 1101:
+        return "Partly Cloudy";
+      case weatherCode === 1102:
+        return "Mostly Cloudy";
+      case weatherCode === 1001:
+        return "Cloudy";
+      case weatherCode >= 4000 && weatherCode <= 4215:
+        return "Rain";
+      case weatherCode >= 5000 && weatherCode <= 5101:
+        return "Snow";
+      case weatherCode === 2000 || weatherCode === 2100:
+        return "Fog";
+      default:
+        return "N/A";
+    }
+  }
+
+  if (isLoading) {
+    return (
+      <Card className="travel-card">
+        <div className="text-center py-8">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+          <p className="text-muted-foreground">
+            Fetching weather data...
+          </p>
+        </div>
+      </Card>
+    );
+  }
 
   if (!weatherData || weatherData.length === 0) {
     return (
@@ -79,7 +119,7 @@ const WeatherDisplay = ({ weatherData }: WeatherDisplayProps) => {
                 {weather.temperature}°
               </div>
               <div className="text-xs text-muted-foreground capitalize">
-                {weather.condition}
+                {getWeatherConditionText(weather.condition)}
               </div>
             </div>
           </div>

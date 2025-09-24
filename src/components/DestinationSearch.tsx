@@ -5,18 +5,20 @@ import { Card } from "@/components/ui/card";
 import { MapPin, Navigation, Search } from "lucide-react";
 
 interface DestinationSearchProps {
-  onSearch: (destination: string) => void;
+  onSearch: (origin: string, destination: string) => void;
 }
+
 
 const DestinationSearch = ({ onSearch }: DestinationSearchProps) => {
   const [destination, setDestination] = useState("");
   const [currentLocation, setCurrentLocation] = useState("");
 
-  const handleSearch = () => {
-    if (destination.trim()) {
-      onSearch(destination);
+ const handleSearch = () => {
+    if (destination.trim() && currentLocation.trim()) {
+      onSearch(currentLocation, destination);
     }
-  };
+  }; 
+  
 
   const getCurrentLocation = () => {
     if (navigator.geolocation) {
