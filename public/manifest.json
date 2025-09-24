@@ -1,0 +1,36 @@
+{
+  "id": "/",
+  "name": "SafePath - Smart Travel Companion for India",
+  "short_name": "SafePath",
+  "description": "Smart travel app for India with real-time routes, weather updates, road alerts, and civic complaint reporting. Perfect for tourists and locals.",
+  "start_url": ".",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#3498db",
+  "icons": [
+    {
+      "src": "logo192.png",
+      "type": "image/png",
+      "sizes": "192x192"
+    },
+    {
+      "src": "logo512.png",
+      "type": "image/png",
+      "sizes": "512x512"
+    }
+  ],
+  "screenshots":[
+  {
+    "src": "screenshots1280x720.png",
+    "sizes": "1280x720",
+    "type": "image/png",
+    "form_factor": "wide"
+  },
+  {
+    "src": "screenshots720x1280.png",
+    "sizes": "720x1280",
+    "type": "image/png",
+    "form_factor": "narrow"
+  }
+]
+}
