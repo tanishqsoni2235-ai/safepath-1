@@ -12,7 +12,7 @@ const queryClient = new QueryClient();
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
-      <APIProvider apiKey="AIzaSyADu3ag6ASn7KprfjZyzcOxEg3iQJi0ZnI">
+      <APIProvider apiKey="AIzaSyAmesCbKg8e36r9fYvch51tRbdgAOQn48Q">
       <Toaster />
       <Sonner />
       <BrowserRouter>

@@ -22,7 +22,7 @@ interface RouteMapProps {
 const RouteMap = ({ origin, destination, waypoints }: RouteMapProps) => {
   const map = useMap();
   const routesLibrary = useMapsLibrary('routes');
-  const [directionsRenderer, setDirectionsRenderer] = useState(null);
+  const [directionsRenderer, setDirectionsRenderer] = useState<google.maps.DirectionsRenderer | null>(null);
 
   useEffect(() => {
     if (!map || !routesLibrary) return;
@@ -35,10 +35,17 @@ const RouteMap = ({ origin, destination, waypoints }: RouteMapProps) => {
     }
 
     const directionsService = new routesLibrary.DirectionsService();
+    
+    // Convert waypoints from the provided format to the Google Maps API format
+    const googleMapsWaypoints = waypoints.map(waypoint => ({
+      location: waypoint.name,
+      stopover: true,
+    }));
 
     directionsService.route({
       origin: origin,
       destination: destination,
+      waypoints: googleMapsWaypoints, // Use the new waypoints variable
       travelMode: routesLibrary.TravelMode.DRIVING,
     }, (response, status) => {
       if (status === 'OK') {
@@ -48,7 +55,7 @@ const RouteMap = ({ origin, destination, waypoints }: RouteMapProps) => {
       }
     });
 
-  }, [origin, destination, directionsRenderer, routesLibrary]);
+  }, [origin, destination, waypoints, directionsRenderer, routesLibrary]);
 
   return (
     <Card className="travel-card overflow-hidden">
@@ -64,6 +71,7 @@ const RouteMap = ({ origin, destination, waypoints }: RouteMapProps) => {
           className="relative w-full h-80 rounded-lg border border-border/50"
           style={{ minHeight: '320px' }}
         >
+          {/* The Map component should be inside a div with a defined size */}
           <Map
             defaultCenter={{ lat: 20.5937, lng: 78.9629 }}
             defaultZoom={5}
